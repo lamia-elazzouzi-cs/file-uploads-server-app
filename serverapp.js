@@ -1,9 +1,11 @@
 const express = require('express');
 const multer = require('multer'); // Multer is a node.js middleware for handling multipart/form-data, which is primarily used for uploading files. 
 const path = require('path');
+const fs = require('fs');
 
 const app = express();
 const port = 3000;
+const directoryPath = 'uploads/';  // Define the uploads directory path
 
 // Set up storage for the uploaded files
 const storage = multer.diskStorage({
@@ -11,7 +13,7 @@ const storage = multer.diskStorage({
     // Specify the directory where the uploads should be stored
     destination: function (req, file, callbackfct) {
         // As calling convention, we pass null as the first param
-        callbackfct(null, 'uploads/');
+        callbackfct(null, directoryPath);
     },
     // Use the original file name
     filename: function (req, file, callbackfct) {
@@ -60,7 +62,23 @@ app.post(
         // Access the uploaded file information
         const uploadedFile = req.file;
         console.log('--> Uploaded file:', uploadedFile);
-        res.send('--> File ' + uploadedFile.originalname + ' uploaded!');
+        //res.send('--> File ' + uploadedFile.originalname + ' uploaded!');
+
+        // If file upload was successful, list all files from the upload dir
+        // In addition to the most recent upload
+        fs.readdir(directoryPath, (err, files)=>{
+            if(err){
+                return res.status(500).send("Error reading directory!");
+            }
+            
+            let strfilenames = `<a href='/'>Home</a><br/>`;
+            files.forEach((file)=>{
+                // Click on filename to open/download the file
+                strfilenames += `${strfilenames} <a target='_blank' href='file/${file}'>${file}</a><br/>`;
+            });
+
+            res.send(strfilenames);
+        });
     }
 );
 
